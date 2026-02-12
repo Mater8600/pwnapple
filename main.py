@@ -6,11 +6,17 @@ import os
 from rich import print
 
 # You will have to redo the logic here, since you don't need to sniff all packets 24/7 in mointer mode. #
+
 parser = argparse.ArgumentParser(prog="PWNAPPLE",description="PWNAPPLE'S CLI for a variety of attacks, you need 2 adapters for this to work well")
 parser.add_argument("-t", "--timeout", help="The delay in seconds before switching channels",default=3,type=int)
 parser.add_argument("-o", "--output", help="The name of the file you want to output to", required=True,type=str)
-parser.add_argument("-i", "--interface", help="The interface you want to use", required=True)
+parser.add_argument("-i", "--interface", help="The interface you want to use", required=True) # Auto sets into mointer mode!
 parser.add_argument("-d", "--deauth", help="If passed the with a interface, it will deauth all networks (BE CAREFUL!)")
+# Something to note, we should have a sniffer for traffic on the network pwnapple connects to.
+# if the -s function is True, then we sniff EAPOL, but if it's false we should have it do it's other tasks
+# this is pwnapple's cli, think of it as a starting point for all the functions pwnapple will eventually have on the webui
+
+
 args = parser.parse_args()
 # I know global vars are dumb, but it's quicker 
 interface = args.interface
@@ -83,9 +89,26 @@ def channelHop():
             os.system(f"iw dev {interface} set channel {channel}")
            
             time.sleep(args.timeout)
+def setupAdapter(interface):
+    """Starts mointer mode for the specified interface"""
+    print(f"Setting up {interface} if it isn't already.")
+    try:
+        os.system(f"airmon-ng start {interface}")
+    except:
+        print(Exception)
+### This is NOT done, I just don't have my pi has a test board!
+def changeHotspot(hotspotname, hotspotpassword):
+    """Creates a wifi hotspot with the specified name, and password, this is to change the default hotspot"""
+    if hotspotname !=None:
+        # We should also clear the previous settings to ensure the hotspots don't conflict
+        # 
+        print("Creating hotspot!")
+        os.system("nmcli ")
+def createPortal():
+    """creates a hotspot for the evil portal attacks, NOT IMPLEMENTED!"""
 def sniffEapol():
     threading.Thread(target=channelHop).start()
-    
+    setupAdapter(interface=interface)
     if interfaceDeauth != None:
         threading.Thread(target=deauth).start()
         threading.Thread(target=cleanList).start()
@@ -99,5 +122,10 @@ def sniffEapol():
 # DEAUTH mostly done, needs more work (channel hopping issues) (make interface hop channels)
 # NRF24 allow for the attachment of NRF24 antenna's for jamming
 # C1101 antenna 
+# Chromecast/Dial hijack
+# WPAD  abuse  -- evil portal first (inspired by: https://github.com/7h30th3r0n3/Evil-M5Project/wiki/wpad-abuse)
+# Handshake Conversion
+# responder 
+
 
 sniffEapol()
