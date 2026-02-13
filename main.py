@@ -86,7 +86,7 @@ def channelHop():
             for ssid, bssid, mac in zip(totalSSIDS,totalBSSIDS, totalmacAddresses):
                 print(f"[dim cyan][Info]: SSID: {ssid} BSSID: {bssid} MAC: {mac}[/dim cyan]")
             
-            os.system(f"iw dev {interface} set channel {channel}")
+            os.system(f"iw dev {interface}mon set channel {channel}")
            
             time.sleep(args.timeout)
 def setupAdapter(interface):
@@ -112,7 +112,7 @@ def sniffEapol():
     if interfaceDeauth != None:
         threading.Thread(target=deauth).start()
         threading.Thread(target=cleanList).start()
-    sniff(iface=interface,prn=PacketHandler,store=False,monitor=True)
+    sniff(iface=f"{interface}mon",prn=PacketHandler,store=False,monitor=True)
 
 # TODO 
 # ADD TYPER OR ARGSPARSE  done
@@ -129,3 +129,4 @@ def sniffEapol():
 
 
 sniffEapol()
+
