@@ -102,7 +102,7 @@ def createPortal():
     """creates a hotspot for the evil portal attacks, NOT IMPLEMENTED!"""
 def sniffEapol(interface,deauth,output,timeout):
     threading.Thread(target=channelHop,args=(interface,timeout,)).start()
-    setupAdapter(interface=interface)
+    #setupAdapter(interface=interface) ## removed for simplicity rn 
     if deauth == True:
         threading.Thread(target=deauthNetworks).start()
         threading.Thread(target=cleanList).start()
@@ -187,7 +187,7 @@ app()
 # DEAUTH mostly done, needs more work (channel hopping issues) (make interface hop channels)
 # NRF24 allow for the attachment of NRF24 antenna's for jamming
 # C1101 antenna 
-# Chromecast/Dial hijack
+# Chromecast/Dial hijack -- done!
 # WPAD  abuse  -- evil portal first (inspired by: https://github.com/7h30th3r0n3/Evil-M5Project/wiki/wpad-abuse)
 # Handshake Conversion
 # responder 
