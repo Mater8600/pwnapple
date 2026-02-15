@@ -100,37 +100,47 @@ def changeHotspot(hotspotname, hotspotpassword):
         os.system("nmcli ")
 def createPortal():
     """creates a hotspot for the evil portal attacks, NOT IMPLEMENTED!"""
-def sniffEapol(interface,deauth,output,timeout):
+def sniffEapol(interface,deauth,output,timeout,logAll):
     threading.Thread(target=channelHop,args=(interface,timeout,)).start()
     #setupAdapter(interface=interface) ## removed for simplicity rn 
+    
     if deauth == True:
         threading.Thread(target=deauthNetworks).start()
         threading.Thread(target=cleanList).start()
     dump = PcapNgWriter(f"{output}.pcapng") 
     def PacketHandler(pkt):
         """Handles all the packet functions for the sniffer"""
-        
-        if pkt.haslayer(Dot11): 
-            if pkt.type == 0 and pkt.subtype == 8:
-                if pkt.addr2 not in bssids:
-                    ssids.append(pkt.info)
-                    bssids.append(pkt.addr2)
-                    macAddresses.append(pkt.addr3)
-                    if pkt.addr2 not in totalBSSIDS:
-                        print(f"[dim cyan][Info]: Beacon frame found: SSID: {pkt.info}, BSSID: {pkt.addr2}, MAC: {pkt.addr3}[/dim cyan]")
-                        totalSSIDS.append(pkt.info)
-                        totalBSSIDS.append(pkt.addr2)
-                        totalmacAddresses.append(pkt.addr3)
-                    
-                dump.write(pkt)
-                if pkt.haslayer(EAP) and pkt.code == 2 and pkt.type == 1:
-                    identity = pkt.identity.decode(errors="ignore")
-                    print(f"[bold green][Info]: EAP Identity Found: {identity}[/bold green]")
+        if logAll == True:
+            dump.write(pkt)
+        else:   
+            if pkt.haslayer(Dot11): 
+                if pkt.type == 0 and pkt.subtype == 8:
+                    if pkt.addr2 not in bssids:
+                        ssids.append(pkt.info)
+                        bssids.append(pkt.addr2)
+                        macAddresses.append(pkt.addr3)
+                        if pkt.addr2 not in totalBSSIDS:
+                            print(f"[dim cyan][Info]: Beacon frame found: SSID: {pkt.info}, BSSID: {pkt.addr2}, MAC: {pkt.addr3}[/dim cyan]")
+                            totalSSIDS.append(pkt.info)
+                            totalBSSIDS.append(pkt.addr2)
+                            totalmacAddresses.append(pkt.addr3)
+                        
                     dump.write(pkt)
+                    if pkt.haslayer(EAP) and pkt.code == 2 and pkt.type == 1:
+                        identity = pkt.identity.decode(errors="ignore")
+                        print(f"[bold green][Info]: EAP Identity Found: {identity}[/bold green]")
+                        dump.write(pkt)
 
-            if pkt.haslayer(EAPOL):
-                print(f"[bold green][Info]: Handshake captured: {pkt.summary()}[/bold green]")
-                dump.write(pkt)
+                if pkt.haslayer(EAPOL):
+                    print(f"[bold green][Info]: Handshake captured: {pkt.summary()}[/bold green]")
+                    dump.write(pkt)
+                if pkt.haslayer(Dot11ProbeReq):
+                    ssid = pkt.getlayer(Dot11Elt).info.decode() if pkt.getlayer(Dot11Elt) else "Hidden/Broadcast"
+                    if ssid == "":
+                        ssid = "Unknown"
+                    print(f"[bold green][Info]: Probe Request from MAC: {pkt.addr2}, SSID: {ssid}[/bold green]")
+                
+            
     sniff(iface=interface,prn=PacketHandler,store=False,monitor=True)
 
 # Typer commands 
@@ -139,10 +149,11 @@ def sniffEapol(interface,deauth,output,timeout):
 def sniffEAPOL(
     interface: str,
     timeout: Annotated[int,typer.Option(help="The time between the channel hops")] =5,
+    logall: Annotated[bool,typer.Option(help="Log all packets instead of just EAPOL!")] =False,
     output: Annotated[str,typer.Option(help="file to output to. (No need for filename!) default =output")] = "output",
     deauth: Annotated[bool,typer.Option(help="pass if need autodeauth")]= False,
             ):
-    sniffEapol(interface,deauth,output,timeout)
+    sniffEapol(interface,deauth,output,timeout,logall)
     #
 
 @app.command(name="hijack")
