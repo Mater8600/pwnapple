@@ -71,7 +71,7 @@ print(
 )
     
 
-def channelHop():
+def channelHop(interface,timeout):
     """Hops channels for capturing handshakes, or EAP identity"""
     while True:
         for channel in range(1, 12): 
@@ -80,9 +80,9 @@ def channelHop():
             for ssid, bssid, mac in zip(totalSSIDS,totalBSSIDS, totalmacAddresses):
                 print(f"[dim cyan][Info]: SSID: {ssid} BSSID: {bssid} MAC: {mac}[/dim cyan]")
             
-            os.system(f"iw dev {interface}mon set channel {channel}")
+            os.system(f"iw dev {interface} set channel {channel}")
            
-            time.sleep(args.timeout)
+            time.sleep(timeout)
 def setupAdapter(interface):
     """Starts mointer mode for the specified interface"""
     print(f"Setting up {interface} if it isn't already.")
@@ -100,11 +100,11 @@ def changeHotspot(hotspotname, hotspotpassword):
         os.system("nmcli ")
 def createPortal():
     """creates a hotspot for the evil portal attacks, NOT IMPLEMENTED!"""
-def sniffEapol(interface,deauth,output):
-    threading.Thread(target=channelHop).start()
+def sniffEapol(interface,deauth,output,timeout):
+    threading.Thread(target=channelHop,args=(interface,timeout,)).start()
     setupAdapter(interface=interface)
-    if deauth == False:
-        threading.Thread(target=deauth).start()
+    if deauth == True:
+        threading.Thread(target=deauthNetworks).start()
         threading.Thread(target=cleanList).start()
     dump = PcapNgWriter(f"{output}.pcapng") 
     def PacketHandler(pkt):
@@ -138,10 +138,11 @@ def sniffEapol(interface,deauth,output):
 @app.command(help="Sniff in mointer mode")
 def sniffEAPOL(
     interface: str,
-    output: Annotated[str,typer.Argument(help="file to output to. (No need for filename!) default =output")] = "output",
-    deauth: Annotated[bool,typer.Argument(help="pass if need autodeauth")]= False,
+    timeout: Annotated[int,typer.Option(help="The time between the channel hops")] =5,
+    output: Annotated[str,typer.Option(help="file to output to. (No need for filename!) default =output")] = "output",
+    deauth: Annotated[bool,typer.Option(help="pass if need autodeauth")]= False,
             ):
-    sniffEapol(interface,deauth,output)
+    sniffEapol(interface,deauth,output,timeout)
     #
 
 @app.command(name="hijack")
