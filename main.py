@@ -8,6 +8,7 @@ from typing import Annotated
 import pychromecast
 import zeroconf
 import re
+import time
 from pylaunch.dial import Dial
 from pychromecast.controllers.youtube import YouTubeController
 # You will have to redo the logic here, since you don't need to sniff all packets 24/7 in mointer mode. #
@@ -22,6 +23,17 @@ from pychromecast.controllers.youtube import YouTubeController
 # if the -s function is True, then we sniff EAPOL, but if it's false we should have it do it's other tasks
 # this is pwnapple's cli, think of it as a starting point for all the functions pwnapple will eventually have on the webui
 ### REDOING WITH TYPER ###
+print(
+    """[bold green]                                                        
+██████╗░░██╗░░░░░░░██╗███╗░░██╗░█████╗░██████╗░██████╗░██╗░░░░░███████╗
+██╔══██╗░██║░░██╗░░██║████╗░██║██╔══██╗██╔══██╗██╔══██╗██║░░░░░██╔════╝
+██████╔╝░╚██╗████╗██╔╝██╔██╗██║███████║██████╔╝██████╔╝██║░░░░░█████╗░░
+██╔═══╝░░░████╔═████║░██║╚████║██╔══██║██╔═══╝░██╔═══╝░██║░░░░░██╔══╝░░
+██║░░░░░░░╚██╔╝░╚██╔╝░██║░╚███║██║░░██║██║░░░░░██║░░░░░███████╗███████╗
+╚═╝░░░░░░░░╚═╝░░░╚═╝░░╚═╝░░╚══╝╚═╝░░╚═╝╚═╝░░░░░╚═╝░░░░░╚══════╝╚══════╝ [bold red]by mater8600[/bold red]
+[/bold green]
+"""
+)
 app = typer.Typer()
 
 
@@ -58,17 +70,7 @@ def cleanList():
         bssids.clear()
         macAddresses.clear()
 
-print(
-    """[bold green]                                                        
-██████╗░░██╗░░░░░░░██╗███╗░░██╗░█████╗░██████╗░██████╗░██╗░░░░░███████╗
-██╔══██╗░██║░░██╗░░██║████╗░██║██╔══██╗██╔══██╗██╔══██╗██║░░░░░██╔════╝
-██████╔╝░╚██╗████╗██╔╝██╔██╗██║███████║██████╔╝██████╔╝██║░░░░░█████╗░░
-██╔═══╝░░░████╔═████║░██║╚████║██╔══██║██╔═══╝░██╔═══╝░██║░░░░░██╔══╝░░
-██║░░░░░░░╚██╔╝░╚██╔╝░██║░╚███║██║░░██║██║░░░░░██║░░░░░███████╗███████╗
-╚═╝░░░░░░░░╚═╝░░░╚═╝░░╚═╝░░╚══╝╚═╝░░╚═╝╚═╝░░░░░╚═╝░░░░░╚══════╝╚══════╝ [bold red]by mater8600[/bold red]
-[/bold green]
-"""
-)
+
     
 
 def channelHop(interface,timeout):
@@ -76,9 +78,9 @@ def channelHop(interface,timeout):
     while True:
         for channel in range(1, 12): 
             os.system("clear")
-            print(f"[dim cyan][Info]: Currently on channel: {channel}[/dim cyan]")
+            print(f"[cyan][Info]: Currently on channel: {channel}[/cyan]")
             for ssid, bssid, mac in zip(totalSSIDS,totalBSSIDS, totalmacAddresses):
-                print(f"[dim cyan][Info]: SSID: {ssid} BSSID: {bssid} MAC: {mac}[/dim cyan]")
+                print(f"[cyan][Info]: SSID: {ssid} BSSID: {bssid} MAC: {mac}[/cyan]")
             
             os.system(f"iw dev {interface} set channel {channel}")
            
@@ -88,8 +90,8 @@ def setupAdapter(interface):
     print(f"Setting up {interface} if it isn't already.")
     try:
         os.system(f"airmon-ng start {interface}")
-    except:
-        print(Exception)
+    except Exception as e:
+        print(e)
 ### This is NOT done, I just don't have my pi has a test board!
 def changeHotspot(hotspotname, hotspotpassword):
     """Creates a wifi hotspot with the specified name, and password, this is to change the default hotspot"""
@@ -120,7 +122,7 @@ def sniffEapol(interface,deauth,output,timeout,logAll):
                         bssids.append(pkt.addr2)
                         macAddresses.append(pkt.addr3)
                         if pkt.addr2 not in totalBSSIDS:
-                            print(f"[dim cyan][Info]: Beacon frame found: SSID: {pkt.info}, BSSID: {pkt.addr2}, MAC: {pkt.addr3}[/dim cyan]")
+                            print(f"[cyan][Info]: Beacon frame found: SSID: {pkt.info}, BSSID: {pkt.addr2}, MAC: {pkt.addr3}[/cyan]")
                             totalSSIDS.append(pkt.info)
                             totalBSSIDS.append(pkt.addr2)
                             totalmacAddresses.append(pkt.addr3)
@@ -162,7 +164,7 @@ def hijack(
 ):
      
      """Hijack all chromecasts on a network and DIAL TVS and play a video of your choice"""
-     print(f"[dim cyan][Info]: Hjacking all the chromecasts with the url: {url}[/dim cyan]")
+     print(f"[cyan][Info]: Hjacking all the chromecasts with the url: {url}[/cyan]")
      d = Dial.discover()
      videoID = url.strip("https://www.youtube.com/watch?v=")
      for device in d:
@@ -172,13 +174,14 @@ def hijack(
             print(error)
     
      zconf = zeroconf.Zeroconf()
+     listener = pychromecast.SimpleCastListener()
      browser = pychromecast.CastBrowser(listener, zconf)
      browser.start_discovery()
      time.sleep(2)
      pychromecast.discovery.stop_discovery(browser)
 
      for uuid, info in browser.devices.items():
-            print(f"[dim cyan][info]: UUID: {uuid}, Friendly Name: {info.friendly_name}[/dim cyan]")
+            print(f"[cyan][info]: UUID: {uuid}, Friendly Name: {info.friendly_name}[/cyan]")
             chromecasts, browser2 = pychromecast.get_listed_chromecasts(uuids={uuid})
             if chromecasts:
                 cast = chromecasts[0]
