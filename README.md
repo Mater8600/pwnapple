@@ -36,4 +36,4 @@ typer
 pychromecast
 zeroconf
 pylaunch
-airmon-ng
+aircrack-ng
