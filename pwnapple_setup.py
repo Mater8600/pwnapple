@@ -10,7 +10,7 @@ except:
     print("Installing your dependancies.")
     os.popen("sudo pip install scapy pychromecast flask pylaunch rich typer  --break-system-packages")
     print("Finished installing all the requirments.")
-os.popen("sudo apt install qrencode ")
+#os.popen("sudo apt install qrencode ") --fix this!!!
 ### Starting the pwnapple hotspot ###
 while True:
     choice = input("Would you like to enable the pwnapple hotspot?\nY or N?\n")
@@ -27,6 +27,9 @@ while True:
         device = input("Please input your wifi card for the creation of the hotspot:\n(type 0 for wlan0)\n")
         if device == "0":
             os.popen(f"sudo nmcli device wifi hotspot ssid {ssid} password {password} ifname wlan0")
+            os.popen('sudo nmcli connection modify "Hotspot" connection.autoconnect yes')
+            os.popen('sudo nmcli connection modify "Hotspot" connection.autoconnect-priority 100')
+
             print("Here's a qr code for a easy connection :)")
             os.popen(f"nmcli wlan0 wifi show-password")
         else:
