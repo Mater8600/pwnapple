@@ -7,18 +7,10 @@ import typer
 from typing import Annotated
 import pychromecast
 import zeroconf
-import re
 import time
 from pylaunch.dial import Dial
 from pychromecast.controllers.youtube import YouTubeController
-# You will have to redo the logic here, since you don't need to sniff all packets 24/7 in mointer mode. #
 
-
-# parser = argparse.ArgumentParser(prog="PWNAPPLE",description="PWNAPPLE'S CLI for a variety of attacks, you need 2 adapters for this to work well")
-# parser.add_argument("-t", "--timeout", help="The delay in seconds before switching channels",default=3,type=int)
-# parser.add_argument("-o", "--output", help="The name of the file you want to output to", required=True,type=str)
-# parser.add_argument("-i", "--interface", help="The interface you want to use", required=True) # Auto sets into mointer mode!
-# parser.add_argument("-d", "--deauth", help="If passed the with a interface, it will deauth all networks (BE CAREFUL!)")
 # Something to note, we should have a sniffer for traffic on the network pwnapple connects to.
 # if the -s function is True, then we sniff EAPOL, but if it's false we should have it do it's other tasks
 # this is pwnapple's cli, think of it as a starting point for all the functions pwnapple will eventually have on the webui
@@ -46,6 +38,7 @@ macAddresses = []
 totalSSIDS = []
 totalBSSIDS = []
 totalmacAddresses = []
+
 def deauthNetworks():
     print("[bold red]Will start to deauth when targets availible[/bold red]")
     while True:
@@ -61,7 +54,7 @@ def deauthNetworks():
         except Exception as err:
             print(err)
             
-
+# dumb way to handle this
 def cleanList():
     while True:
         time.sleep(30)
@@ -191,7 +184,24 @@ def hijack(
                 yt.play_video(video_id=videoID)
                 browser2.stop_discovery()
 
+@app.command(name="arpscan")
+def arpscan(
+    ipaddressrange:str,
+    timeout:Annotated[int,typer.Option(help="The timeout for scanning arp, default is 5")] = 5
+    ):
+    """Performs a arpscan"""
+    print("[cyan][Info]: Scanning all the devices within that ip range[/cyan]")
+    arpRequest = ARP(pdst=ipaddressrange)
+    etherFrame = Ether(dst="ff:ff:ff:ff:ff:ff")
+    requestPacket = etherFrame/arpRequest
+    answered, notAnswered = srp(requestPacket,timeout=timeout,verbose=0)
+    for packet in answered:
+        answer = str(packet.answer)
+        answer= answer.strip("Ether / ARP is at")
+        answer = answer.strip("/ Padding")
+        print(f"[green][Info]: Mac/IP {answer}[/green]")
         
+
 app()
 # TODO 
 # ADD TYPER OR ARGSPARSE  done
